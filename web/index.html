@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wasm 파우더 토이</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        padding: 30px;
+        max-width: 900px;
+      }
+
+      h1 {
+        text-align: center;
+        color: #333;
+        margin-bottom: 10px;
+        font-size: 2em;
+      }
+
+      .subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 20px;
+        font-size: 0.9em;
+      }
+
+      .canvas-wrapper {
+        border: 3px solid #333;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 20px;
+        background: #000;
+        display: inline-block;
+      }
+
+      canvas {
+        display: block;
+        cursor: crosshair;
+        image-rendering: pixelated;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .particle-btn {
+        padding: 15px;
+        border: 3px solid #ddd;
+        border-radius: 10px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.9em;
+        font-weight: bold;
+        text-align: center;
+      }
+
+      .particle-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .particle-btn.active {
+        border-color: #667eea;
+        background: #667eea;
+        color: white;
+      }
+
+      .info {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 10px;
+        font-size: 0.9em;
+        color: #555;
+      }
+
+      .info strong {
+        color: #333;
+      }
+
+      .btn-clear {
+        width: 100%;
+        padding: 12px;
+        background: #ff4757;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 1em;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 10px;
+        transition: background 0.2s;
+      }
+
+      .btn-clear:hover {
+        background: #ff3838;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        font-size: 1.2em;
+        color: #667eea;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🌊 Wasm 파우더 토이</h1>
+      <p class="subtitle">C++ WebAssembly 기반 2D 입자 시뮬레이터</p>
+
+      <div id="loading" class="loading">⏳ WebAssembly 모듈 로딩 중...</div>
+
+      <div id="app" style="display: none">
+        <div class="canvas-wrapper">
+          <canvas id="particleCanvas"></canvas>
+        </div>
+
+        <div class="controls">
+          <button
+            class="particle-btn"
+            data-type="1"
+            style="background: #888; color: white"
+          >
+            🧱 벽 (WALL)
+          </button>
+          <button
+            class="particle-btn active"
+            data-type="2"
+            style="background: #f0e68c"
+          >
+            ⏳ 모래 (SAND)
+          </button>
+          <button
+            class="particle-btn"
+            data-type="3"
+            style="background: #1e90ff; color: white"
+          >
+            💧 물 (WATER)
+          </button>
+          <button
+            class="particle-btn"
+            data-type="4"
+            style="background: #afeeee"
+          >
+            🧊 얼음 (ICE)
+          </button>
+          <button
+            class="particle-btn"
+            data-type="5"
+            style="background: #f5f5f5"
+          >
+            💨 증기 (STEAM)
+          </button>
+          <button
+            class="particle-btn"
+            data-type="6"
+            style="background: #ff4500; color: white"
+          >
+            🔥 불 (FIRE)
+          </button>
+          <button
+            class="particle-btn"
+            data-type="7"
+            style="background: #4169e1; color: white"
+          >
+            ❄️ 냉기 (FROST)
+          </button>
+          <button
+            class="particle-btn"
+            data-type="0"
+            style="background: #000; color: white"
+          >
+            🗑️ 지우개
+          </button>
+        </div>
+
+        <button class="btn-clear" onclick="clearGrid()">🧹 전체 지우기</button>
+
+        <div class="info">
+          <strong>💡 사용법:</strong><br />
+          • 마우스 드래그로 입자 그리기<br />
+          • 🔥 불과 ❄️ 냉기는 주변 온도를 변화시킴<br />
+          • 💧 물은 온도에 따라 🧊 얼음 ↔ 💨 증기로 변환<br />
+          • ⏳ 모래는 중력으로 떨어지고, 💧 물은 퍼짐
+        </div>
+      </div>
+    </div>
+
+    <script src="main.js"></script>
+  </body>
+</html>

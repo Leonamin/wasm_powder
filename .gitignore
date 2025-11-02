@@ -1,0 +1,16 @@
+# Build outputs
+web/simulation.js
+web/simulation.wasm
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Emscripten cache
+.emscripten_cache/
