@@ -1,8 +1,13 @@
 // 전역 변수
 let wasmModule = null;
 let renderData = null;
+let particleData = null;
+let particleSize = 0;
 let selectedType = 2; // 기본값: SAND
 let isDrawing = false;
+let lastMouseX = 0;
+let lastMouseY = 0;
+let renderMode = 'type'; // 'type' 또는 'temperature'
 let WIDTH = 400;
 let HEIGHT = 300;
 
@@ -42,6 +47,11 @@ function loadWasm() {
             const int32Index = bufferPtr >> 2;
             renderData = Module.HEAP32.subarray(int32Index, int32Index + WIDTH * HEIGHT);
             
+            // Particle 배열 접근 설정
+            const particlePtr = Module._getParticleArrayPtr();
+            particleSize = Module._getParticleSize();
+            particleData = particlePtr;
+            
             // UI 초기화
             initUI();
             
@@ -51,6 +61,9 @@ function loadWasm() {
             
             // 게임 루프 시작
             gameLoop();
+            
+            // 연속 그리기 루프 시작
+            continuousDrawLoop();
         }
     };
     
@@ -78,9 +91,19 @@ function initUI() {
         });
     });
     
+    // 렌더링 모드 버튼 이벤트
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderMode = btn.dataset.mode;
+        });
+    });
+    
     // 마우스 이벤트
     canvas.addEventListener('mousedown', (e) => {
         isDrawing = true;
+        updateMousePosition(e);
         addParticleAtMouse(e);
     });
     
@@ -93,9 +116,7 @@ function initUI() {
     });
     
     canvas.addEventListener('mousemove', (e) => {
-        if (isDrawing) {
-            addParticleAtMouse(e);
-        }
+        updateMousePosition(e);
     });
     
     // 터치 이벤트 (모바일 지원)
@@ -126,13 +147,18 @@ function initUI() {
     });
 }
 
-// 마우스 위치에 입자 추가
-function addParticleAtMouse(e) {
+// 마우스 위치 업데이트
+function updateMousePosition(e) {
     const canvas = document.getElementById('particleCanvas');
     const rect = canvas.getBoundingClientRect();
-    const x = Math.floor(e.clientX - rect.left);
-    const y = Math.floor(e.clientY - rect.top);
-    addParticleAt(x, y);
+    lastMouseX = Math.floor(e.clientX - rect.left);
+    lastMouseY = Math.floor(e.clientY - rect.top);
+}
+
+// 마우스 위치에 입자 추가
+function addParticleAtMouse(e) {
+    updateMousePosition(e);
+    addParticleAt(lastMouseX, lastMouseY);
 }
 
 // 좌표에 입자 추가 (브러시 효과)
@@ -158,6 +184,14 @@ function clearGrid() {
     wasmModule._init();
 }
 
+// 연속 그리기 루프 (마우스 pressed 버그 수정)
+function continuousDrawLoop() {
+    if (isDrawing) {
+        addParticleAt(lastMouseX, lastMouseY);
+    }
+    requestAnimationFrame(continuousDrawLoop);
+}
+
 // 메인 게임 루프
 function gameLoop() {
     // Wasm 시뮬레이션 업데이트
@@ -170,6 +204,68 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
+// Particle 데이터 읽기 헬퍼 함수
+function getParticle(index) {
+    const offset = particleData + index * particleSize;
+    
+    // C++ 구조체 오프셋 (바이트 단위)
+    // int type (4 bytes)
+    // float temperature (4 bytes)
+    // int state (4 bytes)
+    // float vx, vy (8 bytes)
+    // float latent_heat_storage (4 bytes)
+    // int life (4 bytes)
+    // bool updated_this_frame (1 byte, but padded to 4)
+    
+    const type = Module.HEAP32[(offset + 0) >> 2];
+    const temperature = Module.HEAPF32[(offset + 4) >> 2];
+    const state = Module.HEAP32[(offset + 8) >> 2];
+    
+    return { type, temperature, state };
+}
+
+// 온도를 색상으로 변환 (HSL)
+function temperatureToColor(temp) {
+    // -20°C ~ 150°C를 0~1로 정규화
+    const normalized = (temp + 20) / 170;
+    const clamped = Math.max(0, Math.min(1, normalized));
+    
+    // HSL: 파랑(240) → 초록(120) → 빨강(0)
+    const hue = (1 - clamped) * 240;
+    
+    return hslToRgb(hue, 100, 50);
+}
+
+// HSL을 RGB로 변환
+function hslToRgb(h, s, l) {
+    h = h / 360;
+    s = s / 100;
+    l = l / 100;
+    
+    let r, g, b;
+    
+    if (s === 0) {
+        r = g = b = l;
+    } else {
+        const hue2rgb = (p, q, t) => {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1/6) return p + (q - p) * 6 * t;
+            if (t < 1/2) return q;
+            if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+            return p;
+        };
+        
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1/3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1/3);
+    }
+    
+    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+}
+
 // 렌더링
 function render() {
     const canvas = document.getElementById('particleCanvas');
@@ -179,15 +275,30 @@ function render() {
     const imageData = ctx.createImageData(WIDTH, HEIGHT);
     const data = imageData.data;
     
-    for (let i = 0; i < renderData.length; i++) {
-        const type = renderData[i];
-        const color = colors[type] || [255, 0, 255]; // 기본값: 마젠타
-        
-        const idx = i * 4;
-        data[idx] = color[0];     // R
-        data[idx + 1] = color[1]; // G
-        data[idx + 2] = color[2]; // B
-        data[idx + 3] = 255;      // A
+    if (renderMode === 'type') {
+        // 물질 타입 렌더링
+        for (let i = 0; i < renderData.length; i++) {
+            const type = renderData[i];
+            const color = colors[type] || [255, 0, 255]; // 기본값: 마젠타
+            
+            const idx = i * 4;
+            data[idx] = color[0];     // R
+            data[idx + 1] = color[1]; // G
+            data[idx + 2] = color[2]; // B
+            data[idx + 3] = 255;      // A
+        }
+    } else if (renderMode === 'temperature') {
+        // 온도 렌더링
+        for (let i = 0; i < WIDTH * HEIGHT; i++) {
+            const particle = getParticle(i);
+            const color = temperatureToColor(particle.temperature);
+            
+            const idx = i * 4;
+            data[idx] = color[0];     // R
+            data[idx + 1] = color[1]; // G
+            data[idx + 2] = color[2]; // B
+            data[idx + 3] = 255;      // A
+        }
     }
     
     ctx.putImageData(imageData, 0, 0);

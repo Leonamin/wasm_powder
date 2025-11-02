@@ -20,12 +20,13 @@ mkdir -p web
 emcc src/simulation.cpp \
     -o web/simulation.js \
     -s WASM=1 \
-    -s EXPORTED_FUNCTIONS='["_init","_update","_getRenderBufferPtr","_addParticle","_getWidth","_getHeight","_malloc","_free"]' \
-    -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","HEAP8","HEAP32","getValue","setValue"]' \
+    -s EXPORTED_FUNCTIONS='["_init","_update","_getRenderBufferPtr","_getParticleArrayPtr","_getParticleSize","_addParticle","_getWidth","_getHeight","_malloc","_free"]' \
+    -s EXPORTED_RUNTIME_METHODS='["ccall","cwrap","HEAP8","HEAP32","HEAPF32","getValue","setValue"]' \
     -s ALLOW_MEMORY_GROWTH=1 \
     -s INITIAL_MEMORY=33554432 \
     -O3 \
-    -std=c++11
+    -std=c++11 \
+    -I src
 
 if [ $? -eq 0 ]; then
     echo "✅ Build successful!"
