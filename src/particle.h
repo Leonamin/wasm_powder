@@ -9,8 +9,7 @@ enum ParticleType {
   WATER = 3,
   ICE = 4,
   STEAM = 5,
-  FIRE = 6,
-  FROST = 7
+  FIRE = 6
 };
 
 // 물리 상태 (material_db.h와 동일)

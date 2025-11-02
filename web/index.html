@@ -147,6 +147,65 @@
         background: #667eea;
         color: white;
       }
+
+      .brush-mode-btn {
+        padding: 5px 12px;
+        margin: 0 3px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        background: white;
+        color: #333;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: bold;
+      }
+
+      .brush-mode-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+      }
+
+      .brush-mode-btn.active {
+        border-color: #667eea;
+        background: #667eea;
+        color: white;
+      }
+
+      .brush-shape-btn {
+        padding: 5px 12px;
+        margin: 0 3px;
+        border: 2px solid #ddd;
+        border-radius: 5px;
+        background: white;
+        color: #333;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: bold;
+      }
+
+      .brush-shape-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+      }
+
+      .brush-shape-btn.active {
+        border-color: #667eea;
+        background: #667eea;
+        color: white;
+      }
+
+      .brush-controls {
+        margin-bottom: 15px;
+        text-align: center;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 8px;
+      }
+
+      #brushSizeDisplay {
+        font-weight: bold;
+        color: #667eea;
+      }
     </style>
   </head>
   <body>
@@ -160,6 +219,23 @@
         <div class="render-mode" style="margin-bottom: 15px; text-align: center;">
           <button class="mode-btn active" data-mode="type">물질 타입</button>
           <button class="mode-btn" data-mode="temperature">온도</button>
+        </div>
+
+        <div class="brush-controls" style="margin-bottom: 15px; text-align: center; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+          <div style="margin-bottom: 8px;">
+            <strong>브러시 모드:</strong>
+            <button class="brush-mode-btn active" data-brush-mode="material" style="margin: 0 3px; padding: 5px 12px; border: 2px solid #667eea; border-radius: 5px; background: #667eea; color: white; cursor: pointer;">물질</button>
+            <button class="brush-mode-btn" data-brush-mode="heat" style="margin: 0 3px; padding: 5px 12px; border: 2px solid #ddd; border-radius: 5px; background: white; color: #333; cursor: pointer;">🔥 가열</button>
+            <button class="brush-mode-btn" data-brush-mode="cool" style="margin: 0 3px; padding: 5px 12px; border: 2px solid #ddd; border-radius: 5px; background: white; color: #333; cursor: pointer;">❄️ 냉각</button>
+          </div>
+          <div style="margin-bottom: 8px;">
+            <strong>브러시 크기:</strong> <span id="brushSizeDisplay">3</span> (마우스 휠로 조절)
+          </div>
+          <div>
+            <strong>브러시 모양:</strong>
+            <button class="brush-shape-btn active" data-shape="circle" style="margin: 0 3px; padding: 5px 12px; border: 2px solid #667eea; border-radius: 5px; background: #667eea; color: white; cursor: pointer;">⭕ 원형</button>
+            <button class="brush-shape-btn" data-shape="square" style="margin: 0 3px; padding: 5px 12px; border: 2px solid #ddd; border-radius: 5px; background: white; color: #333; cursor: pointer;">⬜ 사각형</button>
+          </div>
         </div>
 
         <div class="canvas-wrapper">
@@ -208,13 +284,6 @@
             style="background: #ff4500; color: white"
           >
             🔥 불 (FIRE)
-          </button>
-          <button
-            class="particle-btn"
-            data-type="7"
-            style="background: #4169e1; color: white"
-          >
-            ❄️ 냉기 (FROST)
           </button>
           <button
             class="particle-btn"

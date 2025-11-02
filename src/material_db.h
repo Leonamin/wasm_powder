@@ -116,20 +116,6 @@ const Material g_MaterialDB[] = {
         .latent_heat_vaporization = 0.0f,
         .viscosity = 0.0f,
         .color = {255, 69, 0}      // 주황/빨강
-    },
-    
-    // FROST (냉기) - 특수 물질 (냉각원)
-    {
-        .name = "Frost",
-        .default_state = STATE_GAS,
-        .density = 1.5f,           // 차가운 공기 (아래로 가라앉음)
-        .specific_heat = 1000.0f,
-        .melting_point = -999.0f,
-        .boiling_point = -999.0f,
-        .latent_heat_fusion = 0.0f,
-        .latent_heat_vaporization = 0.0f,
-        .viscosity = 0.0f,
-        .color = {65, 105, 225}    // 로얄블루
     }
 };
 

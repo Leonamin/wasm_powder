@@ -11,6 +11,13 @@ let renderMode = 'type'; // 'type' 또는 'temperature'
 let WIDTH = 400;
 let HEIGHT = 300;
 
+// 브러시 시스템
+let brushMode = 'material'; // 'material', 'heat', 'cool'
+let brushSize = 3;
+let brushShape = 'circle'; // 'circle', 'square'
+const MIN_BRUSH_SIZE = 1;
+const MAX_BRUSH_SIZE = 20;
+
 // 입자 타입별 색상 (RGB)
 const colors = {
     0: [0, 0, 0],           // EMPTY - 검정
@@ -19,8 +26,7 @@ const colors = {
     3: [30, 144, 255],      // WATER - 파랑
     4: [175, 238, 238],     // ICE - 하늘색
     5: [245, 245, 245],     // STEAM - 흰색
-    6: [255, 69, 0],        // FIRE - 주황/빨강
-    7: [65, 105, 225]       // FROST - 로얄블루
+    6: [255, 69, 0]         // FIRE - 주황/빨강
 };
 
 // WebAssembly 모듈 로드 (Emscripten 글루 코드 사용)
@@ -100,6 +106,37 @@ function initUI() {
         });
     });
     
+    // 브러시 모드 버튼 이벤트
+    document.querySelectorAll('.brush-mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.brush-mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            brushMode = btn.dataset.brushMode;
+        });
+    });
+    
+    // 브러시 크기 조절 (마우스 휠)
+    canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        if (e.deltaY < 0) {
+            // 휠 위로 - 브러시 크기 증가
+            brushSize = Math.min(brushSize + 1, MAX_BRUSH_SIZE);
+        } else {
+            // 휠 아래로 - 브러시 크기 감소
+            brushSize = Math.max(brushSize - 1, MIN_BRUSH_SIZE);
+        }
+        updateBrushSizeDisplay();
+    });
+    
+    // 브러시 모양 버튼 이벤트
+    document.querySelectorAll('.brush-shape-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.brush-shape-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            brushShape = btn.dataset.shape;
+        });
+    });
+    
     // 마우스 이벤트
     canvas.addEventListener('mousedown', (e) => {
         isDrawing = true;
@@ -161,21 +198,58 @@ function addParticleAtMouse(e) {
     addParticleAt(lastMouseX, lastMouseY);
 }
 
-// 좌표에 입자 추가 (브러시 효과)
+// 좌표에 브러시 적용
 function addParticleAt(x, y) {
-    const brushSize = 3; // 브러시 크기
-    
     for (let dy = -brushSize; dy <= brushSize; dy++) {
         for (let dx = -brushSize; dx <= brushSize; dx++) {
-            // 원형 브러시
-            if (dx * dx + dy * dy <= brushSize * brushSize) {
+            // 브러시 모양에 따라 필터링
+            let inBrush = false;
+            if (brushShape === 'circle') {
+                inBrush = (dx * dx + dy * dy <= brushSize * brushSize);
+            } else if (brushShape === 'square') {
+                inBrush = true;
+            }
+            
+            if (inBrush) {
                 const px = x + dx;
                 const py = y + dy;
                 if (px >= 0 && px < WIDTH && py >= 0 && py < HEIGHT) {
-                    wasmModule._addParticle(px, py, selectedType);
+                    applyBrush(px, py);
                 }
             }
         }
+    }
+}
+
+// 브러시 효과 적용
+function applyBrush(x, y) {
+    if (brushMode === 'material') {
+        // 물질 생성
+        wasmModule._addParticle(x, y, selectedType);
+    } else if (brushMode === 'heat') {
+        // 가열 (온도 증가)
+        const idx = y * WIDTH + x;
+        const offset = particleData + idx * particleSize;
+        let temp = Module.HEAPF32[(offset + 4) >> 2];
+        temp += 20.0; // 매 프레임 20도 증가
+        if (temp > 200.0) temp = 200.0;
+        Module.HEAPF32[(offset + 4) >> 2] = temp;
+    } else if (brushMode === 'cool') {
+        // 냉각 (온도 감소)
+        const idx = y * WIDTH + x;
+        const offset = particleData + idx * particleSize;
+        let temp = Module.HEAPF32[(offset + 4) >> 2];
+        temp -= 20.0; // 매 프레임 20도 감소
+        if (temp < -50.0) temp = -50.0;
+        Module.HEAPF32[(offset + 4) >> 2] = temp;
+    }
+}
+
+// 브러시 크기 표시 업데이트
+function updateBrushSizeDisplay() {
+    const display = document.getElementById('brushSizeDisplay');
+    if (display) {
+        display.textContent = brushSize;
     }
 }
 
