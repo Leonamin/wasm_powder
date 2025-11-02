@@ -1,23 +1,156 @@
-알겠습니다. 온도까지 포함하는, 즉시 구현을 시작할 수 있는 **'Wasm 파우더 토이' 프로젝트 기획서**를 작성해 드립니다.
-
-'간결함'과 '확장성'이라는 두 마리 토끼를 잡는 데 초점을 맞추겠습니다.
-
------
-
-## 1\. 프로젝트 개요
+# 1\. 프로젝트 개요
 
   * **프로젝트명:** Wasm 파우더 토이 (Wasm Particle Toy)
   * **프로젝트 목표:** C++/WebAssembly를 사용하여 대규모 2D 입자 시뮬레이터를 구현, 순수 JS 대비 Wasm의 성능적 우위를 입증한다.
   * **핵심 컨셉:**
-    1.  C++(Wasm)이 \*\*모든 입자의 물리 연산과 상태 변화(온도 포함)\*\*를 담당한다.
+    1.  C++(Wasm)이 **모든 입자의 물리 연산과 상태 변화(온도 포함)**를 담당한다.
     2.  JS는 Wasm의 연산 결과를 받아 **화면에 렌더링**하고, **사용자 입력**을 Wasm에 전달한다.
   * **팀 역할 (제안):**
       * **서버 개발자:** C++ 로직(시뮬레이션 엔진, 입자 구조) 전체 담당.
       * **앱 개발자:** JS 로직(Wasm 로딩, Canvas 렌더링, UI/입력) 전체 담당.
       * **비개발자:** 기획 보조, 순수 JS 버전 제작(성능 비교용), 최종 발표 자료 제작.
+## 환경 설정
+
+### 1. Windows (WSL 사용 권장)
+
+**WSL 설치:**
+```powershell
+# PowerShell 관리자 권한으로 실행
+wsl --install
+```
+
+**Ubuntu 초기 설정:**
+```bash
+# 패키지 업데이트
+sudo apt update && sudo apt upgrade -y
+
+# 필수 도구 설치
+sudo apt install -y build-essential cmake python3 git
+
+# Emscripten 설치
+sudo apt install -y emscripten
+
+# 줄바꿈 문제 해결 도구
+sudo apt install -y dos2unix
+```
+
+**프로젝트 접근 및 빌드:**
+```bash
+# Windows 파일 시스템 접근 (만약 VS Code에서 터미널을 사용한다면 바로 현재 폴더가 열려서 건너 뛰어도 됨)
+cd /mnt/c/dev/wasm_powder
+
+# 줄바꿈 문제 해결 (최초 1회)
+dos2unix build.sh
+
+# 빌드 실행
+chmod +x build.sh
+./build.sh
+```
+
+**웹 서버 실행:**
+```bash
+cd web
+python3 -m http.server 8000
+# 브라우저에서 http://localhost:8000 접속
+```
+
+> 💡 **팁**: VS Code에서 "WSL" 확장을 설치하면 WSL 환경에서 직접 개발 가능
+
+---
+
+### 2. macOS
+
+**Homebrew 설치 (없는 경우):**
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+**필수 도구 설치:**
+```bash
+# Xcode Command Line Tools (없는 경우)
+xcode-select --install
+
+# Emscripten 설치
+brew install emscripten
+
+# Python3 (보통 기본 설치되어 있음)
+brew install python3
+```
+
+**빌드 및 실행:**
+```bash
+cd /path/to/wasm_powder
+
+# 빌드
+chmod +x build.sh
+./build.sh
+
+# 빌드된 웹 파일 위치로 이동
+cd web
+
+# 웹 서버 실행
+python3 -m http.server 8000
+# 브라우저에서 http://localhost:8000 접속
+```
+
+---
+
+### 3. Linux (Ubuntu/Debian)
+
+**필수 도구 설치:**
+```bash
+# 패키지 업데이트
+sudo apt update && sudo apt upgrade -y
+
+# 빌드 도구
+sudo apt install -y build-essential cmake git
+
+# Python3
+sudo apt install -y python3
+
+# Emscripten
+sudo apt install -y emscripten
+```
+
+**빌드 및 실행:**
+```bash
+cd /path/to/wasm_powder
+
+# 빌드
+chmod +x build.sh
+./build.sh
+
+# 빌드된 웹 파일 위치로 이동
+cd web
+
+# 웹 서버 실행
+python3 -m http.server 8000
+# 브라우저에서 http://localhost:8000 접속
+```
+
+---
+
+### 공통 문제 해결
+
+**1. `bad interpreter: /bin/bash^M` 에러 (Windows/WSL)**
+```bash
+dos2unix build.sh
+```
+
+**2. Emscripten 버전 확인**
+```bash
+emcc --version
+```
+
+**3. 빌드 실패 시 디버깅**
+```bash
+# 상세 로그 출력
+emcc src/simulation.cpp -o web/simulation.js -v
+```
 
 -----
 
+# 구현 계획
 ## 2\. Phase 1: 즉시 구현할 핵심 기능 (MVP)
 
 복잡한 시뮬레이션(열 전도, 기압)은 **제외**하고, **'온도' 변수**와 **'상태 전이'** 규칙에 집중합니다.
