@@ -14,11 +14,9 @@
       body {
         font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        display: flex;
-        justify-content: center;
-        align-items: center;
         min-height: 100vh;
         padding: 20px;
+        overflow-y: auto;
       }
 
       .container {
@@ -26,7 +24,9 @@
         border-radius: 20px;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
         padding: 30px;
-        max-width: 900px;
+        width: fit-content;
+        max-width: 90vw;
+        margin: 0 auto;
       }
 
       h1 {
@@ -46,10 +46,12 @@
       .canvas-wrapper {
         border: 3px solid #333;
         border-radius: 10px;
-        overflow: hidden;
+        overflow-x: auto;
+        overflow-y: hidden;
         margin-bottom: 20px;
         background: #000;
-        display: inline-block;
+        width: 100%;
+        max-width: 800px;
       }
 
       canvas {
@@ -216,25 +218,108 @@
       <div id="loading" class="loading">⏳ WebAssembly 모듈 로딩 중...</div>
 
       <div id="app" style="display: none">
-        <div class="render-mode" style="margin-bottom: 15px; text-align: center;">
+        <div
+          class="render-mode"
+          style="margin-bottom: 15px; text-align: center"
+        >
           <button class="mode-btn active" data-mode="type">물질 타입</button>
           <button class="mode-btn" data-mode="temperature">온도</button>
         </div>
 
-        <div class="brush-controls" style="margin-bottom: 15px; text-align: center; padding: 10px; background: #f8f9fa; border-radius: 8px;">
-          <div style="margin-bottom: 8px;">
+        <div
+          class="brush-controls"
+          style="
+            margin-bottom: 15px;
+            text-align: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+          "
+        >
+          <div style="margin-bottom: 8px">
             <strong>브러시 모드:</strong>
-            <button class="brush-mode-btn active" data-brush-mode="material" style="margin: 0 3px; padding: 5px 12px; border: 2px solid #667eea; border-radius: 5px; background: #667eea; color: white; cursor: pointer;">물질</button>
-            <button class="brush-mode-btn" data-brush-mode="heat" style="margin: 0 3px; padding: 5px 12px; border: 2px solid #ddd; border-radius: 5px; background: white; color: #333; cursor: pointer;">🔥 가열</button>
-            <button class="brush-mode-btn" data-brush-mode="cool" style="margin: 0 3px; padding: 5px 12px; border: 2px solid #ddd; border-radius: 5px; background: white; color: #333; cursor: pointer;">❄️ 냉각</button>
+            <button
+              class="brush-mode-btn active"
+              data-brush-mode="material"
+              style="
+                margin: 0 3px;
+                padding: 5px 12px;
+                border: 2px solid #667eea;
+                border-radius: 5px;
+                background: #667eea;
+                color: white;
+                cursor: pointer;
+              "
+            >
+              물질
+            </button>
+            <button
+              class="brush-mode-btn"
+              data-brush-mode="heat"
+              style="
+                margin: 0 3px;
+                padding: 5px 12px;
+                border: 2px solid #ddd;
+                border-radius: 5px;
+                background: white;
+                color: #333;
+                cursor: pointer;
+              "
+            >
+              🔥 가열
+            </button>
+            <button
+              class="brush-mode-btn"
+              data-brush-mode="cool"
+              style="
+                margin: 0 3px;
+                padding: 5px 12px;
+                border: 2px solid #ddd;
+                border-radius: 5px;
+                background: white;
+                color: #333;
+                cursor: pointer;
+              "
+            >
+              ❄️ 냉각
+            </button>
           </div>
-          <div style="margin-bottom: 8px;">
-            <strong>브러시 크기:</strong> <span id="brushSizeDisplay">3</span> (마우스 휠로 조절)
+          <div style="margin-bottom: 8px">
+            <strong>브러시 크기:</strong>
+            <span id="brushSizeDisplay">3</span> (마우스 휠로 조절)
           </div>
           <div>
             <strong>브러시 모양:</strong>
-            <button class="brush-shape-btn active" data-shape="circle" style="margin: 0 3px; padding: 5px 12px; border: 2px solid #667eea; border-radius: 5px; background: #667eea; color: white; cursor: pointer;">⭕ 원형</button>
-            <button class="brush-shape-btn" data-shape="square" style="margin: 0 3px; padding: 5px 12px; border: 2px solid #ddd; border-radius: 5px; background: white; color: #333; cursor: pointer;">⬜ 사각형</button>
+            <button
+              class="brush-shape-btn active"
+              data-shape="circle"
+              style="
+                margin: 0 3px;
+                padding: 5px 12px;
+                border: 2px solid #667eea;
+                border-radius: 5px;
+                background: #667eea;
+                color: white;
+                cursor: pointer;
+              "
+            >
+              ⭕ 원형
+            </button>
+            <button
+              class="brush-shape-btn"
+              data-shape="square"
+              style="
+                margin: 0 3px;
+                padding: 5px 12px;
+                border: 2px solid #ddd;
+                border-radius: 5px;
+                background: white;
+                color: #333;
+                cursor: pointer;
+              "
+            >
+              ⬜ 사각형
+            </button>
           </div>
         </div>
 
