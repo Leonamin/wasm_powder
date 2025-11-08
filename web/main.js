@@ -95,6 +95,17 @@ function initUI() {
     canvas.width = WIDTH;
     canvas.height = HEIGHT;
     
+    // addParticle 함수명 변경 (모듈식 빌드 대응)
+    console.log('Available functions:', Object.keys(wasmModule).filter(k => k.startsWith('_')));
+    if (wasmModule._addParticleWrapper) {
+        console.log('Using _addParticleWrapper');
+        wasmModule._addParticle = wasmModule._addParticleWrapper;
+    } else if (wasmModule._addParticle) {
+        console.log('Using _addParticle (already exists)');
+    } else {
+        console.error('No addParticle function found!');
+    }
+    
     // 입자 선택 버튼 이벤트
     document.querySelectorAll('.particle-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -103,6 +114,12 @@ function initUI() {
             selectedType = parseInt(btn.dataset.type);
         });
     });
+    
+    // Clear 버튼 이벤트
+    const clearBtn = document.getElementById('clearBtn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearGrid);
+    }
     
     // 렌더링 모드 버튼 이벤트
     document.querySelectorAll('.mode-btn').forEach(btn => {
