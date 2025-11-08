@@ -1,6 +1,6 @@
 # Build outputs
-web/simulation.js
-web/simulation.wasm
+# web/simulation.js
+# web/simulation.wasm
 
 # macOS
 .DS_Store
