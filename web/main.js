@@ -18,6 +18,13 @@ let brushShape = 'circle'; // 'circle', 'square'
 const MIN_BRUSH_SIZE = 1;
 const MAX_BRUSH_SIZE = 20;
 
+// FPS 측정
+let lastFrameTime = performance.now();
+let frameCount = 0;
+let fps = 0;
+let fpsUpdateInterval = 0.1; // 0.1초마다 FPS 업데이트
+let fpsAccumulator = 0;
+
 // 입자 타입별 색상 (RGB)
 const colors = {
     0: [0, 0, 0],           // EMPTY - 검정
@@ -253,6 +260,14 @@ function updateBrushSizeDisplay() {
     }
 }
 
+// FPS 표시 업데이트
+function updateFPSDisplay() {
+    const display = document.getElementById('fpsDisplay');
+    if (display) {
+        display.textContent = fps.toFixed(1);
+    }
+}
+
 // 그리드 전체 지우기
 function clearGrid() {
     wasmModule._init();
@@ -268,6 +283,22 @@ function continuousDrawLoop() {
 
 // 메인 게임 루프
 function gameLoop() {
+    // FPS 측정
+    const currentTime = performance.now();
+    const deltaTime = (currentTime - lastFrameTime) / 1000; // 초 단위
+    lastFrameTime = currentTime;
+    
+    frameCount++;
+    fpsAccumulator += deltaTime;
+    
+    // 일정 간격마다 FPS 업데이트
+    if (fpsAccumulator >= fpsUpdateInterval) {
+        fps = frameCount / fpsAccumulator;
+        frameCount = 0;
+        fpsAccumulator = 0;
+        updateFPSDisplay();
+    }
+    
     // Wasm 시뮬레이션 업데이트
     wasmModule._update();
     
