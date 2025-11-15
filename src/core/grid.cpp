@@ -36,6 +36,11 @@ void addParticle(int x, int y, int type) {
     return;
 
   int idx = getIndex(x, y);
+  
+  // EMPTY가 아니면 덮어쓰지 않음 (기존 물질 보호)
+  if (grid[idx].type != EMPTY)
+    return;
+  
   grid[idx].type = type;
   
   const Material& mat = getMaterial(type);
@@ -53,6 +58,26 @@ void addParticle(int x, int y, int type) {
     break;
   case STEAM:
     grid[idx].temperature = 110.0f;
+    grid[idx].life = -1; // 무한
+    break;
+  case OXYGEN:
+  case HYDROGEN:
+  case STEAM_OIL:
+    grid[idx].temperature = 20.0f;
+    grid[idx].life = -1; // 무한
+    break;
+  case WOOD:
+  case IRON:
+    grid[idx].temperature = 20.0f;
+    grid[idx].life = -1; // 무한
+    break;
+  case LITHIUM:
+  case SODIUM:
+    grid[idx].temperature = 20.0f;
+    grid[idx].life = -1; // 무한
+    break;
+  case OIL:
+    grid[idx].temperature = 20.0f;
     grid[idx].life = -1; // 무한
     break;
   default:
