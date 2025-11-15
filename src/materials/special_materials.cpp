@@ -26,23 +26,23 @@ void updateLifeAndSpecialMaterials() {
       
       // FIRE: 주변을 가열하고 위로 올라가며 소멸
       if (p.type == FIRE) {
-        // 주변을 가열 (덮어쓰기 대신 증가)
-        for (int dy = -1; dy <= 1; dy++) {
-          for (int dx = -1; dx <= 1; dx++) {
-            if (dx == 0 && dy == 0) continue;
-            int nx = x + dx;
-            int ny = y + dy;
-            if (inBounds(nx, ny)) {
-              int nIdx = getIndex(nx, ny);
-              // 온도 증가 (최대 200도까지)
-              nextGrid[nIdx].temperature += 30.0f;
-              if (nextGrid[nIdx].temperature > 200.0f) {
-                nextGrid[nIdx].temperature = 200.0f;
-              }
-              markChunkActive(nx, ny);
-            }
-          }
-        }
+        // 주변을 가열 (임시 비활성화)
+        // for (int dy = -1; dy <= 1; dy++) {
+        //   for (int dx = -1; dx <= 1; dx++) {
+        //     if (dx == 0 && dy == 0) continue;
+        //     int nx = x + dx;
+        //     int ny = y + dy;
+        //     if (inBounds(nx, ny)) {
+        //       int nIdx = getIndex(nx, ny);
+        //       // 온도 증가 (최대 800도까지)
+        //       nextGrid[nIdx].temperature += 80.0f;
+        //       if (nextGrid[nIdx].temperature > 800.0f) {
+        //         nextGrid[nIdx].temperature = 800.0f;
+        //       }
+        //       markChunkActive(nx, ny);
+        //     }
+        //   }
+        // }
         
         // 랜덤하게 확산 (부모보다 life 감소)
         if (rand() % 3 == 0 && p.life > 10) { // life가 10 이상일 때만 확산
