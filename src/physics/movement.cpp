@@ -31,10 +31,12 @@ void updateMovement() {
       Particle& p = nextGrid[idx];
       
       if (p.type == EMPTY || p.type == WALL) continue;
-      if (p.state == STATE_SOLID) continue;
       if (p.updated_this_frame) continue;
       
       const Material& mat = getMaterial(p.type);
+      
+      // 일반 고체는 움직이지 않음
+      if (p.state == STATE_SOLID) continue;
       
       // FIRE: 위로 올라감 + 랜덤 움직임
       if (p.type == FIRE) {
@@ -77,7 +79,7 @@ void updateMovement() {
       int targetY = y + (int)p.vy;
       int targetX = x + (int)p.vx;
       
-      // POWDER: 아래로 떨어짐
+      // POWDER: 아래로 떨어짐 + 랜덤 좌우 움직임
       if (p.state == STATE_POWDER) {
         if (canMoveTo(x, y + 1, mat.density)) {
           int toIdx = getIndex(x, y + 1);
@@ -88,27 +90,31 @@ void updateMovement() {
           moved = true;
           markChunkActive(x, y);
           markChunkActive(x, y + 1);
-        } else if (canMoveTo(x - 1, y + 1, mat.density)) {
-          int toIdx = getIndex(x - 1, y + 1);
-          Particle temp = nextGrid[idx];
-          nextGrid[idx] = nextGrid[toIdx];
-          nextGrid[toIdx] = temp;
-          nextGrid[toIdx].updated_this_frame = true;
-          moved = true;
-          markChunkActive(x, y);
-          markChunkActive(x - 1, y + 1);
-        } else if (canMoveTo(x + 1, y + 1, mat.density)) {
-          int toIdx = getIndex(x + 1, y + 1);
-          Particle temp = nextGrid[idx];
-          nextGrid[idx] = nextGrid[toIdx];
-          nextGrid[toIdx] = temp;
-          nextGrid[toIdx].updated_this_frame = true;
-          moved = true;
-          markChunkActive(x, y);
-          markChunkActive(x + 1, y + 1);
+        } else {
+          // 대각선 방향 랜덤 선택
+          int dir = (rand() % 2) * 2 - 1; // -1 또는 1
+          if (canMoveTo(x + dir, y + 1, mat.density)) {
+            int toIdx = getIndex(x + dir, y + 1);
+            Particle temp = nextGrid[idx];
+            nextGrid[idx] = nextGrid[toIdx];
+            nextGrid[toIdx] = temp;
+            nextGrid[toIdx].updated_this_frame = true;
+            moved = true;
+            markChunkActive(x, y);
+            markChunkActive(x + dir, y + 1);
+          } else if (canMoveTo(x - dir, y + 1, mat.density)) {
+            int toIdx = getIndex(x - dir, y + 1);
+            Particle temp = nextGrid[idx];
+            nextGrid[idx] = nextGrid[toIdx];
+            nextGrid[toIdx] = temp;
+            nextGrid[toIdx].updated_this_frame = true;
+            moved = true;
+            markChunkActive(x, y);
+            markChunkActive(x - dir, y + 1);
+          }
         }
       }
-      // LIQUID: 아래 + 좌우로 퍼짐
+      // LIQUID: 아래 + 좌우로 퍼짐 (향상된 확산)
       else if (p.state == STATE_LIQUID) {
         if (canMoveTo(x, y + 1, mat.density)) {
           int toIdx = getIndex(x, y + 1);
@@ -119,91 +125,138 @@ void updateMovement() {
           moved = true;
           markChunkActive(x, y);
           markChunkActive(x, y + 1);
-        } else if (canMoveTo(x - 1, y + 1, mat.density)) {
-          int toIdx = getIndex(x - 1, y + 1);
-          Particle temp = nextGrid[idx];
-          nextGrid[idx] = nextGrid[toIdx];
-          nextGrid[toIdx] = temp;
-          nextGrid[toIdx].updated_this_frame = true;
-          moved = true;
-          markChunkActive(x, y);
-          markChunkActive(x - 1, y + 1);
-        } else if (canMoveTo(x + 1, y + 1, mat.density)) {
-          int toIdx = getIndex(x + 1, y + 1);
-          Particle temp = nextGrid[idx];
-          nextGrid[idx] = nextGrid[toIdx];
-          nextGrid[toIdx] = temp;
-          nextGrid[toIdx].updated_this_frame = true;
-          moved = true;
-          markChunkActive(x, y);
-          markChunkActive(x + 1, y + 1);
-        } else if (canMoveTo(x - 1, y, mat.density)) {
-          int toIdx = getIndex(x - 1, y);
-          Particle temp = nextGrid[idx];
-          nextGrid[idx] = nextGrid[toIdx];
-          nextGrid[toIdx] = temp;
-          nextGrid[toIdx].updated_this_frame = true;
-          moved = true;
-          markChunkActive(x, y);
-          markChunkActive(x - 1, y);
-        } else if (canMoveTo(x + 1, y, mat.density)) {
-          int toIdx = getIndex(x + 1, y);
-          Particle temp = nextGrid[idx];
-          nextGrid[idx] = nextGrid[toIdx];
-          nextGrid[toIdx] = temp;
-          nextGrid[toIdx].updated_this_frame = true;
-          moved = true;
-          markChunkActive(x, y);
-          markChunkActive(x + 1, y);
+        } else {
+          // 대각선 방향 랜덤 선택
+          int diagDir = (rand() % 2) * 2 - 1; // -1 또는 1
+          if (canMoveTo(x + diagDir, y + 1, mat.density)) {
+            int toIdx = getIndex(x + diagDir, y + 1);
+            Particle temp = nextGrid[idx];
+            nextGrid[idx] = nextGrid[toIdx];
+            nextGrid[toIdx] = temp;
+            nextGrid[toIdx].updated_this_frame = true;
+            moved = true;
+            markChunkActive(x, y);
+            markChunkActive(x + diagDir, y + 1);
+          } else if (canMoveTo(x - diagDir, y + 1, mat.density)) {
+            int toIdx = getIndex(x - diagDir, y + 1);
+            Particle temp = nextGrid[idx];
+            nextGrid[idx] = nextGrid[toIdx];
+            nextGrid[toIdx] = temp;
+            nextGrid[toIdx].updated_this_frame = true;
+            moved = true;
+            markChunkActive(x, y);
+            markChunkActive(x - diagDir, y + 1);
+          } else {
+            // 수평 확산 - 여러 칸 확인하여 더 멀리 퍼짐
+            int horizDir = (rand() % 2) * 2 - 1; // -1 또는 1
+            int dispersionRate = 10; // 확산 거리 (더 빠른 확산)
+            
+            for (int dist = 1; dist <= dispersionRate; dist++) {
+              if (canMoveTo(x + horizDir * dist, y, mat.density)) {
+                int toIdx = getIndex(x + horizDir * dist, y);
+                Particle temp = nextGrid[idx];
+                nextGrid[idx] = nextGrid[toIdx];
+                nextGrid[toIdx] = temp;
+                nextGrid[toIdx].updated_this_frame = true;
+                moved = true;
+                markChunkActive(x, y);
+                markChunkActive(x + horizDir * dist, y);
+                break;
+              }
+            }
+            
+            // 반대 방향도 시도
+            if (!moved) {
+              for (int dist = 1; dist <= dispersionRate; dist++) {
+                if (canMoveTo(x - horizDir * dist, y, mat.density)) {
+                  int toIdx = getIndex(x - horizDir * dist, y);
+                  Particle temp = nextGrid[idx];
+                  nextGrid[idx] = nextGrid[toIdx];
+                  nextGrid[toIdx] = temp;
+                  nextGrid[toIdx].updated_this_frame = true;
+                  moved = true;
+                  markChunkActive(x, y);
+                  markChunkActive(x - horizDir * dist, y);
+                  break;
+                }
+              }
+            }
+          }
         }
       }
-      // GAS: 위로 올라감 + 확산
+      // GAS: 위로 올라감 + 랜덤 확산
       else if (p.state == STATE_GAS) {
-        if (canMoveTo(x, y - 1, mat.density)) {
-          int toIdx = getIndex(x, y - 1);
-          Particle temp = nextGrid[idx];
-          nextGrid[idx] = nextGrid[toIdx];
-          nextGrid[toIdx] = temp;
-          nextGrid[toIdx].updated_this_frame = true;
-          moved = true;
-          markChunkActive(x, y);
-          markChunkActive(x, y - 1);
-        } else if (canMoveTo(x - 1, y - 1, mat.density)) {
-          int toIdx = getIndex(x - 1, y - 1);
-          Particle temp = nextGrid[idx];
-          nextGrid[idx] = nextGrid[toIdx];
-          nextGrid[toIdx] = temp;
-          nextGrid[toIdx].updated_this_frame = true;
-          moved = true;
-          markChunkActive(x, y);
-          markChunkActive(x - 1, y - 1);
-        } else if (canMoveTo(x + 1, y - 1, mat.density)) {
-          int toIdx = getIndex(x + 1, y - 1);
-          Particle temp = nextGrid[idx];
-          nextGrid[idx] = nextGrid[toIdx];
-          nextGrid[toIdx] = temp;
-          nextGrid[toIdx].updated_this_frame = true;
-          moved = true;
-          markChunkActive(x, y);
-          markChunkActive(x + 1, y - 1);
-        } else if (canMoveTo(x - 1, y, mat.density)) {
-          int toIdx = getIndex(x - 1, y);
-          Particle temp = nextGrid[idx];
-          nextGrid[idx] = nextGrid[toIdx];
-          nextGrid[toIdx] = temp;
-          nextGrid[toIdx].updated_this_frame = true;
-          moved = true;
-          markChunkActive(x, y);
-          markChunkActive(x - 1, y);
-        } else if (canMoveTo(x + 1, y, mat.density)) {
-          int toIdx = getIndex(x + 1, y);
-          Particle temp = nextGrid[idx];
-          nextGrid[idx] = nextGrid[toIdx];
-          nextGrid[toIdx] = temp;
-          nextGrid[toIdx].updated_this_frame = true;
-          moved = true;
-          markChunkActive(x, y);
-          markChunkActive(x + 1, y);
+        // 랜덤 움직임 방향 선택
+        int randomChoice = rand() % 10;
+        
+        // 70% 확률로 위로 이동
+        if (randomChoice < 7) {
+          int diagDir = (rand() % 2) * 2 - 1; // -1 또는 1
+          
+          if (canMoveTo(x, y - 1, mat.density)) {
+            int toIdx = getIndex(x, y - 1);
+            Particle temp = nextGrid[idx];
+            nextGrid[idx] = nextGrid[toIdx];
+            nextGrid[toIdx] = temp;
+            nextGrid[toIdx].updated_this_frame = true;
+            moved = true;
+            markChunkActive(x, y);
+            markChunkActive(x, y - 1);
+          } else if (canMoveTo(x + diagDir, y - 1, mat.density)) {
+            int toIdx = getIndex(x + diagDir, y - 1);
+            Particle temp = nextGrid[idx];
+            nextGrid[idx] = nextGrid[toIdx];
+            nextGrid[toIdx] = temp;
+            nextGrid[toIdx].updated_this_frame = true;
+            moved = true;
+            markChunkActive(x, y);
+            markChunkActive(x + diagDir, y - 1);
+          } else if (canMoveTo(x - diagDir, y - 1, mat.density)) {
+            int toIdx = getIndex(x - diagDir, y - 1);
+            Particle temp = nextGrid[idx];
+            nextGrid[idx] = nextGrid[toIdx];
+            nextGrid[toIdx] = temp;
+            nextGrid[toIdx].updated_this_frame = true;
+            moved = true;
+            markChunkActive(x, y);
+            markChunkActive(x - diagDir, y - 1);
+          }
+        }
+        
+        // 이동하지 못했으면 수평 확산
+        if (!moved) {
+          int horizDir = (rand() % 2) * 2 - 1; // -1 또는 1
+          int dispersionRate = 2; // 기체 확산 거리
+          
+          for (int dist = 1; dist <= dispersionRate; dist++) {
+            if (canMoveTo(x + horizDir * dist, y, mat.density)) {
+              int toIdx = getIndex(x + horizDir * dist, y);
+              Particle temp = nextGrid[idx];
+              nextGrid[idx] = nextGrid[toIdx];
+              nextGrid[toIdx] = temp;
+              nextGrid[toIdx].updated_this_frame = true;
+              moved = true;
+              markChunkActive(x, y);
+              markChunkActive(x + horizDir * dist, y);
+              break;
+            }
+          }
+          
+          if (!moved) {
+            for (int dist = 1; dist <= dispersionRate; dist++) {
+              if (canMoveTo(x - horizDir * dist, y, mat.density)) {
+                int toIdx = getIndex(x - horizDir * dist, y);
+                Particle temp = nextGrid[idx];
+                nextGrid[idx] = nextGrid[toIdx];
+                nextGrid[toIdx] = temp;
+                nextGrid[toIdx].updated_this_frame = true;
+                moved = true;
+                markChunkActive(x, y);
+                markChunkActive(x - horizDir * dist, y);
+                break;
+              }
+            }
+          }
         }
       }
       

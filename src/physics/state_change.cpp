@@ -18,7 +18,7 @@ void updateStateChange() {
       
       // 녹는점 체크 (고체 → 액체)
       if (p.temperature > mat.melting_point && p.type == ICE) {
-        // 간단한 버전: 잠열 없이 즉시 변환
+        // 얼음이 물로 변환
         p.type = WATER;
         p.state = STATE_LIQUID;
         markChunkActive(x, y);
