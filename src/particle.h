@@ -9,7 +9,24 @@ enum ParticleType {
   WATER = 3,
   ICE = 4,
   STEAM = 5,
-  FIRE = 6
+  FIRE = 6,
+  
+  // 기체
+  OXYGEN = 7,      // 산소
+  HYDROGEN = 8,    // 수소
+  STEAM_OIL = 9,   // 유증기
+  CO2 = 15,        // 이산화탄소
+  
+  // 고체
+  WOOD = 10,       // 나무
+  IRON = 11,       // 철
+  
+  // 고체(가루)
+  LITHIUM = 12,    // 리튬
+  SODIUM = 13,     // 나트륨
+  
+  // 액체
+  OIL = 14         // 기름
 };
 
 // 물리 상태 (material_db.h와 동일)

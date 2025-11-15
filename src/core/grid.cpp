@@ -63,6 +63,7 @@ void addParticle(int x, int y, int type) {
   case OXYGEN:
   case HYDROGEN:
   case STEAM_OIL:
+  case CO2:
     grid[idx].temperature = 20.0f;
     grid[idx].life = -1; // 무한
     break;

@@ -24,6 +24,11 @@ emcc src/simulation.cpp \
     src/physics/forces.cpp \
     src/physics/movement.cpp \
     src/materials/special_materials.cpp \
+    src/chemistry/reaction_system.cpp \
+    src/chemistry/reaction_registry.cpp \
+    src/chemistry/reactions/combustion.cpp \
+    src/chemistry/reactions/water_metal.cpp \
+    src/chemistry/reactions/evaporation.cpp \
     -o web/simulation.js \
     -s WASM=1 \
     -s EXPORTED_FUNCTIONS='["_init","_update","_getRenderBufferPtr","_getParticleArrayPtr","_getParticleSize","_addParticleWrapper","_getWidth","_getHeight","_malloc","_free"]' \
@@ -31,7 +36,7 @@ emcc src/simulation.cpp \
     -s ALLOW_MEMORY_GROWTH=1 \
     -s INITIAL_MEMORY=33554432 \
     -O3 \
-    -std=c++11 \
+    -std=c++17 \
     -I src
 
 if [ $? -eq 0 ]; then
@@ -44,6 +49,7 @@ if [ $? -eq 0 ]; then
     echo "   - src/core/          (grid management)"
     echo "   - src/physics/       (simulation passes)"
     echo "   - src/materials/     (special materials)"
+    echo "   - src/chemistry/     (chemical reactions)"
     echo ""
     echo "🚀 To run the project:"
     echo "   cd web && python3 -m http.server 8000"

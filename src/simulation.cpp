@@ -10,6 +10,8 @@
 #include "physics/forces.h"
 #include "physics/movement.h"
 #include "materials/special_materials.h"
+#include "chemistry/reaction_system.h"
+#include "chemistry/reaction_registry.h"
 #include <cstring>
 #include <emscripten/emscripten.h>
 
@@ -22,6 +24,9 @@ extern "C" {
 EMSCRIPTEN_KEEPALIVE
 void init() {
   initGrid();
+  
+  // 화학 반응 시스템 초기화
+  ReactionRegistry::getInstance().initializeAllReactions();
 }
 
 // 시뮬레이션 1프레임 실행
@@ -35,8 +40,8 @@ void update() {
     nextGrid[i].updated_this_frame = false;
   }
   
-  // PASS 1: 화학 반응 (나중에 구현)
-  // updateChemistry();
+  // PASS 1: 화학 반응
+  updateChemistry();
   
   // PASS 2: 열 전도
   updateHeatConduction();
