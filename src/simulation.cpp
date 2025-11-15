@@ -38,11 +38,14 @@ void update() {
   // PASS 1: 화학 반응 (나중에 구현)
   // updateChemistry();
   
-  // PASS 2: 열 전도
-  updateHeatConduction();
+  // PASS 2: 열 전도 (임시 비활성화)
+  // updateHeatConduction();
   
-  // PASS 3: 상태 전이
-  updateStateChange();
+  // PASS 2.5: 온도 감쇠 (임시 비활성화)
+  // applyCooling();
+  
+  // PASS 3: 상태 전이 (임시 비활성화)
+  // updateStateChange();
   
   // PASS 4: 힘 계산
   updateForces();
