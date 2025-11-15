@@ -33,7 +33,18 @@ const colors = {
     3: [30, 144, 255],      // WATER - 파랑
     4: [175, 238, 238],     // ICE - 하늘색
     5: [245, 245, 245],     // STEAM - 흰색
-    6: [255, 69, 0]         // FIRE - 주황/빨강
+    6: [255, 69, 0],        // FIRE - 주황/빨강
+    
+    // 새로운 물질들
+    7: [200, 220, 255],     // OXYGEN - 연한 파랑
+    8: [255, 200, 200],     // HYDROGEN - 연한 빨강
+    9: [80, 70, 50],        // STEAM_OIL - 어두운 갈색 증기
+    10: [139, 69, 19],      // WOOD - 갈색
+    11: [192, 192, 192],    // IRON - 은색
+    12: [220, 220, 220],    // LITHIUM - 밝은 회색
+    13: [200, 200, 210],    // SODIUM - 은백색
+    14: [100, 80, 40],      // OIL - 어두운 갈색
+    15: [180, 180, 180]     // CO2 - 회색 (무거운 기체)
 };
 
 // WebAssembly 모듈 로드 (Emscripten 글루 코드 사용)
@@ -95,6 +106,17 @@ function initUI() {
     canvas.width = WIDTH;
     canvas.height = HEIGHT;
     
+    // addParticle 함수명 변경 (모듈식 빌드 대응)
+    console.log('Available functions:', Object.keys(wasmModule).filter(k => k.startsWith('_')));
+    if (wasmModule._addParticleWrapper) {
+        console.log('Using _addParticleWrapper');
+        wasmModule._addParticle = wasmModule._addParticleWrapper;
+    } else if (wasmModule._addParticle) {
+        console.log('Using _addParticle (already exists)');
+    } else {
+        console.error('No addParticle function found!');
+    }
+    
     // 입자 선택 버튼 이벤트
     document.querySelectorAll('.particle-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -103,6 +125,12 @@ function initUI() {
             selectedType = parseInt(btn.dataset.type);
         });
     });
+    
+    // Clear 버튼 이벤트
+    const clearBtn = document.getElementById('clearBtn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearGrid);
+    }
     
     // 렌더링 모드 버튼 이벤트
     document.querySelectorAll('.mode-btn').forEach(btn => {

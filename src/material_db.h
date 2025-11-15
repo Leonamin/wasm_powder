@@ -116,6 +116,132 @@ const Material g_MaterialDB[] = {
         .latent_heat_vaporization = 0.0f,
         .viscosity = 0.0f,
         .color = {255, 69, 0}      // 주황/빨강
+    },
+    
+    // OXYGEN (산소)
+    {
+        .name = "Oxygen",
+        .default_state = STATE_GAS,
+        .density = 1.4f,           // 공기보다 약간 무거움
+        .specific_heat = 920.0f,
+        .melting_point = -218.0f,
+        .boiling_point = -183.0f,
+        .latent_heat_fusion = 0.0f,
+        .latent_heat_vaporization = 0.0f,
+        .viscosity = 0.00002f,
+        .color = {200, 220, 255}   // 연한 파랑
+    },
+    
+    // HYDROGEN (수소)
+    {
+        .name = "Hydrogen",
+        .default_state = STATE_GAS,
+        .density = 0.09f,          // 매우 가벼움 (빠르게 위로)
+        .specific_heat = 14300.0f, // 매우 높은 비열
+        .melting_point = -259.0f,
+        .boiling_point = -253.0f,
+        .latent_heat_fusion = 0.0f,
+        .latent_heat_vaporization = 0.0f,
+        .viscosity = 0.00001f,
+        .color = {255, 200, 200}   // 연한 빨강
+    },
+    
+    // STEAM_OIL (유증기)
+    {
+        .name = "Oil Steam",
+        .default_state = STATE_GAS,
+        .density = 2.5f,           // 수증기보다 무거움
+        .specific_heat = 2000.0f,
+        .melting_point = -999.0f,
+        .boiling_point = 300.0f,   // 300°C 이하로 냉각되면 기름으로
+        .latent_heat_fusion = 0.0f,
+        .latent_heat_vaporization = 500000.0f,
+        .viscosity = 0.00003f,
+        .color = {80, 70, 50}      // 어두운 갈색 증기
+    },
+    
+    // WOOD (나무)
+    {
+        .name = "Wood",
+        .default_state = STATE_SOLID,
+        .density = 600.0f,         // 물보다 가벼움
+        .specific_heat = 1700.0f,
+        .melting_point = -999.0f,  // 녹지 않음
+        .boiling_point = -999.0f,  // 발화점은 화학반응으로 처리
+        .latent_heat_fusion = 0.0f,
+        .latent_heat_vaporization = 0.0f,
+        .viscosity = 0.0f,
+        .color = {139, 69, 19}     // 갈색
+    },
+    
+    // IRON (철)
+    {
+        .name = "Iron",
+        .default_state = STATE_SOLID,
+        .density = 7874.0f,        // 매우 무거움
+        .specific_heat = 449.0f,
+        .melting_point = 1538.0f,  // 높은 녹는점
+        .boiling_point = 2862.0f,
+        .latent_heat_fusion = 247000.0f,
+        .latent_heat_vaporization = 6090000.0f,
+        .viscosity = 0.0f,
+        .color = {192, 192, 192}   // 은색
+    },
+    
+    // LITHIUM (리튬)
+    {
+        .name = "Lithium",
+        .default_state = STATE_POWDER,
+        .density = 534.0f,         // 가벼운 금속
+        .specific_heat = 3582.0f,  // 높은 비열
+        .melting_point = 180.5f,
+        .boiling_point = 1342.0f,
+        .latent_heat_fusion = 432000.0f,
+        .latent_heat_vaporization = 20900000.0f,
+        .viscosity = 0.0f,
+        .color = {220, 220, 220}   // 밝은 회색
+    },
+    
+    // SODIUM (나트륨)
+    {
+        .name = "Sodium",
+        .default_state = STATE_POWDER,
+        .density = 971.0f,         // 물보다 약간 가벼움
+        .specific_heat = 1230.0f,
+        .melting_point = 97.7f,
+        .boiling_point = 883.0f,
+        .latent_heat_fusion = 113000.0f,
+        .latent_heat_vaporization = 4210000.0f,
+        .viscosity = 0.0f,
+        .color = {200, 200, 210}   // 은백색
+    },
+    
+    // OIL (기름)
+    {
+        .name = "Oil",
+        .default_state = STATE_LIQUID,
+        .density = 900.0f,         // 물보다 가벼움 (위로 뜸)
+        .specific_heat = 2000.0f,
+        .melting_point = -40.0f,
+        .boiling_point = 300.0f,   // 300°C에서 유증기로
+        .latent_heat_fusion = 0.0f,
+        .latent_heat_vaporization = 500000.0f,
+        .viscosity = 0.05f,        // 물보다 점성 높음
+        .color = {100, 80, 40}     // 어두운 갈색
+    },
+    
+    // CO2 (이산화탄소)
+    {
+        .name = "CO2",
+        .default_state = STATE_GAS,
+        .density = 1.98f,          // 공기보다 무거움 (아래로 가라앉음)
+        .specific_heat = 840.0f,
+        .melting_point = -78.5f,   // 드라이아이스
+        .boiling_point = -78.5f,   // 승화
+        .latent_heat_fusion = 0.0f,
+        .latent_heat_vaporization = 0.0f,
+        .viscosity = 0.00001f,
+        .color = {180, 180, 180}   // 회색 (무거운 기체)
     }
 };
 
