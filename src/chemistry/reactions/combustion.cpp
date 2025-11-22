@@ -63,6 +63,21 @@ ReactionResult react_hydrogen_fire(const Particle& hydrogen, const Particle& fir
     return result;
 }
 
+// 얼음 + 불 → 물 + 증기 (얼음이 녹고 불이 꺼지며 증기 발생)
+ReactionResult react_ice_fire(const Particle& ice, const Particle& fire, int ix, int iy, int fx, int fy) {
+    ReactionResult result;
+    
+    // 불이 얼음에 닿으면 즉시 녹음 (100% 확률)
+    result.occurred = true;
+    result.new_type_center = WATER;   // 얼음 → 물로 변환
+    result.new_type_neighbor = STEAM; // 불 → 증기로 변환 (불이 물에 의해 꺼지면서 증기 발생)
+    result.heat_released = -33400.0f; // 흡열 반응 (얼음이 녹으려면 열이 필요)
+    result.life_center = -1;          // 물은 무한
+    result.life_neighbor = -1;        // 증기는 무한
+    
+    return result;
+}
+
 // 연소 반응 등록
 void registerCombustionReactions(ReactionRegistry& registry) {
     // 나무 + 불 → 불 + CO2
@@ -129,5 +144,27 @@ void registerCombustionReactions(ReactionRegistry& registry) {
         .probability = 0.8f,
         .min_temperature = -999.0f,
         .name = "Hydrogen Explosion (rev)"
+    });
+    
+    // 얼음 + 불 → 물 (얼음이 녹음)
+    registry.registerReaction({
+        .reactant_a = ICE,
+        .reactant_b = FIRE,
+        .handler = react_ice_fire,
+        .probability = 1.0f,  // 100% 확률 - 불이 닿으면 즉시 녹음
+        .min_temperature = -999.0f,
+        .name = "Ice Melting by Fire"
+    });
+    
+    // 불 + 얼음 (순서 반대)
+    registry.registerReaction({
+        .reactant_a = FIRE,
+        .reactant_b = ICE,
+        .handler = [](const Particle& f, const Particle& ice, int fx, int fy, int ix, int iy) {
+            return react_ice_fire(ice, f, ix, iy, fx, fy);
+        },
+        .probability = 1.0f,
+        .min_temperature = -999.0f,
+        .name = "Ice Melting by Fire (rev)"
     });
 }
