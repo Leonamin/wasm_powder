@@ -2,6 +2,8 @@
 #include "../core/grid.h"
 #include "../core/types.h"
 #include "../material_db.h"
+#include <cmath>
+#include <cstdlib>
 
 void updateForces() {
   for (int y = 0; y < HEIGHT; y++) {
