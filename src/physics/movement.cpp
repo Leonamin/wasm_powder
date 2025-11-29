@@ -13,6 +13,10 @@ static bool canMoveTo(int x, int y, float myDensity) {
   if (target.type == EMPTY)
     return true;
   
+  // 고체(Solid)는 밀어낼 수 없음
+  if (target.state == STATE_SOLID)
+    return false;
+  
   const Material& targetMat = getMaterial(target.type);
   return myDensity > targetMat.density;
 }

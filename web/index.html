@@ -4,476 +4,237 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Wasm 파우더 토이</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
+      * { margin: 0; padding: 0; box-sizing: border-box; }
       body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        font-family: "Segoe UI", Apple SD Gothic Neo, sans-serif;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         min-height: 100vh;
         padding: 20px;
-        overflow-y: auto;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
       }
-
       .container {
         background: white;
         border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         padding: 30px;
-        width: fit-content;
-        max-width: 90vw;
-        margin: 0 auto;
-      }
-
-      h1 {
-        text-align: center;
-        color: #333;
-        margin-bottom: 10px;
-        font-size: 2em;
-      }
-
-      .subtitle {
-        text-align: center;
-        color: #666;
-        margin-bottom: 20px;
-        font-size: 0.9em;
-      }
-
-      .canvas-wrapper {
-        border: 3px solid #333;
-        border-radius: 10px;
-        overflow-x: auto;
-        overflow-y: hidden;
-        margin-bottom: 20px;
-        background: #000;
         width: 100%;
         max-width: 800px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
       }
-
-      canvas {
-        display: block;
-        cursor: crosshair;
-        image-rendering: pixelated;
-      }
-
-      .controls {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-        gap: 10px;
-        margin-bottom: 20px;
-      }
-
-      .particle-btn {
-        padding: 15px;
-        border: 3px solid #ddd;
+      h1 { color: #333; margin-bottom: 20px; font-size: 1.8em; }
+      
+      /* 캔버스 */
+      .canvas-wrapper {
+        border: 4px solid #333;
         border-radius: 10px;
+        background: #000;
+        margin-bottom: 25px;
+        overflow: hidden;
+        width: 100%;
+        max-width: 800px; 
+        aspect-ratio: 4/3; /* 400:300 비율 유지 */
+        display: flex; 
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      }
+      canvas {
+        width: 100%; height: 100%;
+        image-rendering: pixelated;
+        cursor: crosshair;
+        display: block;
+      }
+
+      /* 탭 메뉴 */
+      .tabs {
+        display: flex;
+        background: #f1f3f5;
+        padding: 5px;
+        border-radius: 30px;
+        margin-bottom: 20px;
+        width: 100%;
+      }
+      .tab-btn {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 25px;
+        background: transparent;
+        color: #868e96;
+        font-weight: bold;
+        font-size: 1em;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .tab-btn.active {
+        background: white;
+        color: #333;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+
+      /* 내용 영역 */
+      .tab-content {
+        display: none;
+        width: 100%;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 15px;
+      }
+      .tab-content.active { display: grid; }
+
+      /* 입자 버튼 */
+      .particle-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100px;
+        border: none;
+        border-radius: 15px;
+        cursor: pointer;
+        transition: 0.2s;
+        font-weight: bold;
+        color: #333;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        font-size: 0.9em;
+      }
+      .particle-btn:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+      }
+      .particle-btn.active {
+        border: 3px solid #667eea;
+        transform: scale(0.95);
+        box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+      }
+      .icon { font-size: 2.5em; margin-bottom: 10px; }
+      
+      /* 로딩 */
+      #loading {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(255,255,255,0.9);
+        display: flex; justify-content: center; align-items: center;
+        font-size: 2em; z-index: 9999;
+      }
+
+      /* 하단 컨트롤 */
+      .bottom-controls {
+        margin-top: 30px;
+        display: flex;
+        gap: 15px;
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      .util-btn {
+        padding: 10px 20px;
+        border-radius: 10px;
+        border: 1px solid #ddd;
         background: white;
         cursor: pointer;
-        transition: all 0.2s;
-        font-size: 0.9em;
         font-weight: bold;
-        text-align: center;
+        display: flex; align-items: center; gap: 5px;
       }
-
-      .particle-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      .util-btn.clear {
+        background: #ff6b6b; color: white; border: none;
       }
-
-      .particle-btn.active {
-        border-color: #667eea;
-        background: #667eea;
-        color: white;
-      }
-
-      .info {
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 10px;
-        font-size: 0.9em;
-        color: #555;
-      }
-
-      .info strong {
-        color: #333;
-      }
-
-      .btn-clear {
-        width: 100%;
-        padding: 12px;
-        background: #ff4757;
+      .util-btn:hover { background: #f8f9fa; }
+      .util-btn.clear:hover { background: #fa5252; }
+      .util-btn.mode-switch {
+        background: #4c6ef5;
         color: white;
         border: none;
-        border-radius: 10px;
-        font-size: 1em;
-        font-weight: bold;
-        cursor: pointer;
-        margin-top: 10px;
-        transition: background 0.2s;
+        font-size: 1.1em;
+        padding: 12px 24px;
       }
-
-      .btn-clear:hover {
-        background: #ff3838;
+      .util-btn.mode-switch:hover { background: #3b5bdb; }
+      .fps { font-family: monospace; color: #888; align-self: center; }
+      .stats {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        font-family: monospace;
+        color: #888;
       }
-
-      .loading {
-        text-align: center;
-        padding: 40px;
-        font-size: 1.2em;
-        color: #667eea;
-      }
-
-      .mode-btn {
-        padding: 8px 16px;
-        margin: 0 5px;
-        border: 2px solid #ddd;
-        border-radius: 5px;
-        background: white;
-        color: #333;
-        cursor: pointer;
-        font-weight: bold;
-        transition: all 0.2s;
-      }
-
-      .mode-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-      }
-
-      .mode-btn.active {
-        border-color: #667eea;
-        background: #667eea;
-        color: white;
-      }
-
-      .brush-mode-btn {
-        padding: 5px 12px;
-        margin: 0 3px;
-        border: 2px solid #ddd;
-        border-radius: 5px;
-        background: white;
-        color: #333;
-        cursor: pointer;
-        transition: all 0.2s;
-        font-weight: bold;
-      }
-
-      .brush-mode-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-      }
-
-      .brush-mode-btn.active {
-        border-color: #667eea;
-        background: #667eea;
-        color: white;
-      }
-
-      .brush-shape-btn {
-        padding: 5px 12px;
-        margin: 0 3px;
-        border: 2px solid #ddd;
-        border-radius: 5px;
-        background: white;
-        color: #333;
-        cursor: pointer;
-        transition: all 0.2s;
-        font-weight: bold;
-      }
-
-      .brush-shape-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-      }
-
-      .brush-shape-btn.active {
-        border-color: #667eea;
-        background: #667eea;
-        color: white;
-      }
-
-      .brush-controls {
-        margin-bottom: 15px;
-        text-align: center;
-        padding: 10px;
-        background: #f8f9fa;
-        border-radius: 8px;
-      }
-
-      #brushSizeDisplay {
-        font-weight: bold;
-        color: #667eea;
-      }
+      .stats-label { font-size: 0.8em; color: #aaa; }
     </style>
   </head>
   <body>
+    <div id="loading">⏳ 로딩 중...</div>
+
     <div class="container">
       <h1>🌊 Wasm 파우더 토이</h1>
-      <p class="subtitle">C++ WebAssembly 기반 2D 입자 시뮬레이터</p>
+      
+      <div class="canvas-wrapper">
+        <canvas id="particleCanvas"></canvas>
+      </div>
 
-      <div id="loading" class="loading">⏳ WebAssembly 모듈 로딩 중...</div>
+      <!-- 탭 -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="setTab('solid', event)">고체</button>
+        <button class="tab-btn" onclick="setTab('liquid', event)">액체</button>
+        <button class="tab-btn" onclick="setTab('gas', event)">기체</button>
+        <button class="tab-btn" onclick="setTab('energy', event)">에너지</button>
+      </div>
 
-      <div id="app" style="display: none">
-        <div
-          class="render-mode"
-          style="margin-bottom: 15px; text-align: center"
-        >
-          <button class="mode-btn active" data-mode="type">물질 타입</button>
-          <button class="mode-btn" data-mode="temperature">온도</button>
-          <span style="margin-left: 20px; font-weight: bold; color: #667eea;">
-            FPS: <span id="fpsDisplay">0.0</span>
-          </span>
-        </div>
+      <!-- 고체 -->
+      <div id="solid" class="tab-content active">
+        <button class="particle-btn" data-type="1" style="background: #e9ecef"><span class="icon">🧱</span>벽</button>
+        <button class="particle-btn" data-type="2" style="background: #fff9db"><span class="icon">⏳</span>모래</button>
+        <button class="particle-btn" data-type="10" style="background: #d8bfa5"><span class="icon">🪵</span>나무</button>
+        <button class="particle-btn" data-type="11" style="background: #dee2e6"><span class="icon">🔩</span>철</button>
+        <button class="particle-btn" data-type="12" style="background: #f1f3f5"><span class="icon">⚛️</span>리튬</button>
+        <button class="particle-btn" data-type="13" style="background: #e3fafc"><span class="icon">🧂</span>나트륨</button>
+        <button class="particle-btn" data-type="4" style="background: #e3fafc"><span class="icon">🧊</span>얼음</button>
+      </div>
 
-        <div
-          class="brush-controls"
-          style="
-            margin-bottom: 15px;
-            text-align: center;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-          "
-        >
-          <div style="margin-bottom: 8px">
-            <strong>브러시 모드:</strong>
-            <button
-              class="brush-mode-btn active"
-              data-brush-mode="material"
-              style="
-                margin: 0 3px;
-                padding: 5px 12px;
-                border: 2px solid #667eea;
-                border-radius: 5px;
-                background: #667eea;
-                color: white;
-                cursor: pointer;
-              "
-            >
-              물질
-            </button>
-            <button
-              class="brush-mode-btn"
-              data-brush-mode="heat"
-              style="
-                margin: 0 3px;
-                padding: 5px 12px;
-                border: 2px solid #ddd;
-                border-radius: 5px;
-                background: white;
-                color: #333;
-                cursor: pointer;
-              "
-            >
-              🔥 가열
-            </button>
-            <button
-              class="brush-mode-btn"
-              data-brush-mode="cool"
-              style="
-                margin: 0 3px;
-                padding: 5px 12px;
-                border: 2px solid #ddd;
-                border-radius: 5px;
-                background: white;
-                color: #333;
-                cursor: pointer;
-              "
-            >
-              ❄️ 냉각
-            </button>
-          </div>
-          <div style="margin-bottom: 8px">
-            <strong>브러시 크기:</strong>
-            <span id="brushSizeDisplay">3</span> (마우스 휠로 조절)
-          </div>
-          <div>
-            <strong>브러시 모양:</strong>
-            <button
-              class="brush-shape-btn active"
-              data-shape="circle"
-              style="
-                margin: 0 3px;
-                padding: 5px 12px;
-                border: 2px solid #667eea;
-                border-radius: 5px;
-                background: #667eea;
-                color: white;
-                cursor: pointer;
-              "
-            >
-              ⭕ 원형
-            </button>
-            <button
-              class="brush-shape-btn"
-              data-shape="square"
-              style="
-                margin: 0 3px;
-                padding: 5px 12px;
-                border: 2px solid #ddd;
-                border-radius: 5px;
-                background: white;
-                color: #333;
-                cursor: pointer;
-              "
-            >
-              ⬜ 사각형
-            </button>
-          </div>
-        </div>
+      <!-- 액체 -->
+      <div id="liquid" class="tab-content">
+        <button class="particle-btn" data-type="3" style="background: #e7f5ff"><span class="icon">💧</span>물</button>
+        <button class="particle-btn" data-type="14" style="background: #fff3bf"><span class="icon">🛢️</span>기름</button>
+      </div>
 
-        <div class="canvas-wrapper">
-          <canvas id="particleCanvas"></canvas>
-        </div>
+      <!-- 기체 -->
+      <div id="gas" class="tab-content">
+        <button class="particle-btn" data-type="5" style="background: #f8f9fa"><span class="icon">💨</span>증기</button>
+        <button class="particle-btn" data-type="7" style="background: #e7f5ff"><span class="icon">🌬️</span>산소</button>
+        <button class="particle-btn" data-type="8" style="background: #ffc9c9"><span class="icon">🎈</span>수소</button>
+        <button class="particle-btn" data-type="9" style="background: #e9ecef"><span class="icon">🌫️</span>유증기</button>
+        <button class="particle-btn" data-type="15" style="background: #ced4da"><span class="icon">☁️</span>CO₂</button>
+      </div>
 
-        <div class="controls">
-          <!-- 기본 물질 -->
-          <button
-            class="particle-btn"
-            data-type="1"
-            style="background: #888; color: white"
-          >
-            🧱 벽 (WALL)
-          </button>
-          <button
-            class="particle-btn active"
-            data-type="2"
-            style="background: #f0e68c"
-          >
-            ⏳ 모래 (SAND)
-          </button>
-          <button
-            class="particle-btn"
-            data-type="3"
-            style="background: #1e90ff; color: white"
-          >
-            💧 물 (WATER)
-          </button>
-          <button
-            class="particle-btn"
-            data-type="4"
-            style="background: #afeeee"
-          >
-            🧊 얼음 (ICE)
-          </button>
-          <button
-            class="particle-btn"
-            data-type="5"
-            style="background: #f5f5f5"
-          >
-            💨 증기 (STEAM)
-          </button>
-          <button
-            class="particle-btn"
-            data-type="6"
-            style="background: #ff4500; color: white"
-          >
-            🔥 불 (FIRE)
-          </button>
-          
-          <!-- 기체 -->
-          <button
-            class="particle-btn"
-            data-type="7"
-            style="background: #c8dcff; color: #333"
-          >
-            💨 산소 (O₂)
-          </button>
-          <button
-            class="particle-btn"
-            data-type="8"
-            style="background: #ffc8c8; color: #333"
-          >
-            🎈 수소 (H₂)
-          </button>
-          <button
-            class="particle-btn"
-            data-type="9"
-            style="background: #504628; color: white"
-          >
-            🌫️ 유증기
-          </button>
-          <button
-            class="particle-btn"
-            data-type="15"
-            style="background: #b4b4b4; color: #333"
-          >
-            💨 CO₂
-          </button>
-          
-          <!-- 고체 -->
-          <button
-            class="particle-btn"
-            data-type="10"
-            style="background: #8b4513; color: white"
-          >
-            🪵 나무 (WOOD)
-          </button>
-          <button
-            class="particle-btn"
-            data-type="11"
-            style="background: #c0c0c0; color: #333"
-          >
-            🔩 철 (IRON)
-          </button>
-          
-          <!-- 고체(가루) -->
-          <button
-            class="particle-btn"
-            data-type="12"
-            style="background: #dcdcdc; color: #333"
-          >
-            ⚛️ 리튬 (Li)
-          </button>
-          <button
-            class="particle-btn"
-            data-type="13"
-            style="background: #c8c8d2; color: #333"
-          >
-            ⚛️ 나트륨 (Na)
-          </button>
-          
-          <!-- 액체 -->
-          <button
-            class="particle-btn"
-            data-type="14"
-            style="background: #645028; color: white"
-          >
-            🛢️ 기름 (OIL)
-          </button>
-          
-          <!-- 지우개 -->
-          <button
-            class="particle-btn"
-            data-type="0"
-            style="background: #000; color: white"
-          >
-            🗑️ 지우개
-          </button>
-        </div>
+      <!-- 에너지 -->
+      <div id="energy" class="tab-content">
+        <button class="particle-btn" data-type="6" style="background: #ffe3e3"><span class="icon">🔥</span>불</button>
+        <button class="particle-btn brush-mode-btn" data-brush-mode="heat" style="background: #ffc9c9"><span class="icon">🌡️</span>가열</button>
+        <button class="particle-btn brush-mode-btn" data-brush-mode="cool" style="background: #c3fae8"><span class="icon">❄️</span>냉각</button>
+      </div>
 
-        <button class="btn-clear" onclick="clearGrid()">🧹 전체 지우기</button>
-
-        <div class="info">
-          <strong>💡 사용법:</strong><br />
-          • 마우스 드래그로 입자 그리기<br />
-          • 🔥 불과 ❄️ 냉기는 주변 온도를 변화시킴<br />
-          • 💧 물은 온도에 따라 🧊 얼음 ↔ 💨 증기로 변환<br />
-          <br />
-          <strong>⚗️ 화학 반응:</strong><br />
-          • 🪵 나무 + 💨 산소 + 🔥 열 → 불<br />
-          • 🛢️ 기름 + 💨 산소 + 🔥 열 → 강한 불<br />
-          • 🎈 수소 + 💨 산소 + 🔥 열 → 💥 폭발 + 💨 증기<br />
-          • 💧 물 + ⚛️ 리튬/나트륨 → 💥 폭발 + 🎈 수소<br />
-          • 🛢️ 기름 + 🔥 열 → 🌫️ 유증기
+      <div class="bottom-controls">
+        <button class="util-btn mode-switch" id="simModeToggle">⚡ WASM 모드</button>
+        <button class="util-btn" id="viewModeToggle">🎨 물질 보기</button>
+        <button class="util-btn clear" onclick="clearGrid()">🧹 초기화</button>
+        <div class="stats">
+          <div><span class="stats-label">FPS:</span> <span id="fpsDisplay">0</span></div>
+          <div><span class="stats-label">Particles:</span> <span id="particleCount">0</span></div>
         </div>
       </div>
     </div>
 
     <script src="main.js"></script>
+    <script>
+      function setTab(id, event) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        event.currentTarget.classList.add('active');
+      }
+    </script>
   </body>
 </html>
