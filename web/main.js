@@ -1,5 +1,7 @@
 // 전역 변수
 let wasmModule = null;
+let jsSimulation = null;
+let simulationMode = 'wasm'; // 'wasm' or 'js'
 let renderData = null;
 let particleData = null;
 let particleSize = 0;
@@ -17,10 +19,11 @@ const HEIGHT = 300;
 let brushMode = 'material'; // 'material', 'heat', 'cool'
 let brushSize = 3; // 기본값
 
-// FPS
+// FPS and Performance
 let lastFrameTime = performance.now();
 let frameCount = 0;
 let fps = 0;
+let particleCount = 0;
 
 // 색상표
 const colors = {
@@ -42,6 +45,25 @@ const colors = {
     15: [180, 180, 180]
 };
 
+// Load JS Simulation
+function loadJSSimulation() {
+    const script = document.createElement('script');
+    script.src = 'simulation_js.js';
+    script.onload = function() {
+        console.log('JS Simulation Loaded');
+        jsSimulation = new JSSimulation();
+        jsSimulation.init();
+        
+        if (simulationMode === 'js') {
+            initUI();
+            document.getElementById('loading').style.display = 'none';
+            gameLoop();
+            continuousDrawLoop();
+        }
+    };
+    document.head.appendChild(script);
+}
+
 // Wasm 로드
 function loadWasm() {
     window.Module = {
@@ -60,12 +82,15 @@ function loadWasm() {
             particleData = Module._getParticleArrayPtr();
             particleSize = Module._getParticleSize();
             
-            initUI();
+            if (simulationMode === 'wasm') {
+                initUI();
+                document.getElementById('loading').style.display = 'none';
+                gameLoop();
+                continuousDrawLoop();
+            }
             
-            document.getElementById('loading').style.display = 'none';
-            
-            gameLoop();
-            continuousDrawLoop();
+            // Load JS simulation as well for switching
+            loadJSSimulation();
         }
     };
     
@@ -102,10 +127,15 @@ function initUI() {
     });
     
     // 뷰 모드 토글
-    document.getElementById('modeToggle').addEventListener('click', () => {
+    document.getElementById('viewModeToggle').addEventListener('click', () => {
         renderMode = (renderMode === 'type') ? 'temperature' : 'type';
-        document.getElementById('modeToggle').textContent = 
+        document.getElementById('viewModeToggle').textContent = 
             (renderMode === 'type') ? '🎨 물질 보기' : '🌡️ 온도 보기';
+    });
+    
+    // 시뮬레이션 모드 토글
+    document.getElementById('simModeToggle').addEventListener('click', () => {
+        switchSimulationMode();
     });
     
     // 마우스 이벤트
@@ -158,29 +188,75 @@ function addParticleAt(x, y) {
 }
 
 function applyBrush(x, y) {
-    if (!wasmModule) return;
-    
     if (brushMode === 'material') {
-        wasmModule._addParticle(x, y, selectedType);
-    } else {
-        const idx = y * WIDTH + x;
-        const offset = particleData + idx * particleSize;
-        const tempIdx = (offset + 4) >> 2;
-        let temp = wasmModule.HEAPF32[tempIdx];
-        
-        if (brushMode === 'heat') {
-            temp += 20.0;
-            if (temp > 200.0) temp = 200.0;
-        } else {
-            temp -= 20.0;
-            if (temp < -50.0) temp = -50.0;
+        if (simulationMode === 'wasm' && wasmModule) {
+            wasmModule._addParticle(x, y, selectedType);
+        } else if (simulationMode === 'js' && jsSimulation) {
+            jsSimulation.addParticle(x, y, selectedType);
         }
-        wasmModule.HEAPF32[tempIdx] = temp;
+    } else {
+        if (simulationMode === 'wasm' && wasmModule) {
+            const idx = y * WIDTH + x;
+            const offset = particleData + idx * particleSize;
+            const tempIdx = (offset + 4) >> 2;
+            let temp = wasmModule.HEAPF32[tempIdx];
+            
+            if (brushMode === 'heat') {
+                temp += 20.0;
+                if (temp > 200.0) temp = 200.0;
+            } else {
+                temp -= 20.0;
+                if (temp < -50.0) temp = -50.0;
+            }
+            wasmModule.HEAPF32[tempIdx] = temp;
+        } else if (simulationMode === 'js' && jsSimulation) {
+            const idx = y * WIDTH + x;
+            const particles = jsSimulation.getParticleArray();
+            let temp = particles[idx].temperature;
+            
+            if (brushMode === 'heat') {
+                temp += 20.0;
+                if (temp > 200.0) temp = 200.0;
+            } else {
+                temp -= 20.0;
+                if (temp < -50.0) temp = -50.0;
+            }
+            particles[idx].temperature = temp;
+        }
     }
 }
 
 function clearGrid() {
-    wasmModule._init();
+    if (simulationMode === 'wasm' && wasmModule) {
+        wasmModule._init();
+    } else if (simulationMode === 'js' && jsSimulation) {
+        jsSimulation.init();
+    }
+}
+
+function switchSimulationMode() {
+    const newMode = simulationMode === 'wasm' ? 'js' : 'wasm';
+    
+    if (newMode === 'wasm' && !wasmModule) {
+        alert('WASM 모듈이 아직 로드되지 않았습니다.');
+        return;
+    }
+    if (newMode === 'js' && !jsSimulation) {
+        alert('JS 시뮬레이션이 아직 로드되지 않았습니다.');
+        return;
+    }
+    
+    simulationMode = newMode;
+    
+    // Update UI
+    const btn = document.getElementById('simModeToggle');
+    btn.textContent = simulationMode === 'wasm' ? '⚡ WASM 모드' : '🟨 JS 모드';
+    btn.style.background = simulationMode === 'wasm' ? '#4c6ef5' : '#fab005';
+    
+    // Clear grid when switching
+    clearGrid();
+    
+    console.log('Switched to', simulationMode, 'mode');
 }
 
 function continuousDrawLoop() {
@@ -189,16 +265,23 @@ function continuousDrawLoop() {
 }
 
 function gameLoop() {
-    // FPS
+    // FPS and particle count
     const now = performance.now();
     frameCount++;
     if (now - lastFrameTime >= 1000) {
         document.getElementById('fpsDisplay').textContent = frameCount;
+        document.getElementById('particleCount').textContent = particleCount.toLocaleString();
         frameCount = 0;
         lastFrameTime = now;
     }
     
-    wasmModule._update();
+    // Update simulation
+    if (simulationMode === 'wasm' && wasmModule) {
+        wasmModule._update();
+    } else if (simulationMode === 'js' && jsSimulation) {
+        jsSimulation.update();
+    }
+    
     render();
     requestAnimationFrame(gameLoop);
 }
@@ -236,11 +319,26 @@ function render() {
     const ctx = canvas.getContext('2d');
     const imageData = ctx.createImageData(WIDTH, HEIGHT);
     const data = imageData.data;
-    const len = renderData.length;
+    
+    let renderBuffer, particles;
+    particleCount = 0;
+    
+    if (simulationMode === 'wasm' && wasmModule) {
+        renderBuffer = renderData;
+        particles = null;
+    } else if (simulationMode === 'js' && jsSimulation) {
+        renderBuffer = jsSimulation.getRenderBuffer();
+        particles = jsSimulation.getParticleArray();
+    } else {
+        return;
+    }
+    
+    const len = WIDTH * HEIGHT;
     
     if (renderMode === 'type') {
         for (let i = 0; i < len; i++) {
-            const type = renderData[i];
+            const type = renderBuffer[i];
+            if (type !== 0) particleCount++;
             const color = colors[type] || [255, 0, 255];
             const idx = i << 2;
             data[idx] = color[0];
@@ -251,8 +349,15 @@ function render() {
     } else {
         // Temperature mode
         for (let i = 0; i < len; i++) {
-            const offset = particleData + i * particleSize;
-            const temp = wasmModule.HEAPF32[(offset + 4) >> 2];
+            let temp;
+            if (simulationMode === 'wasm') {
+                const offset = particleData + i * particleSize;
+                temp = wasmModule.HEAPF32[(offset + 4) >> 2];
+            } else {
+                temp = particles[i].temperature;
+            }
+            
+            if (renderBuffer[i] !== 0) particleCount++;
             const color = getTempColor(temp);
             const idx = i << 2;
             data[idx] = color[0];
