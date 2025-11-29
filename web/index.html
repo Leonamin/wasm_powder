@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Wasm 파우더 토이</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body {
@@ -144,7 +145,24 @@
       }
       .util-btn:hover { background: #f8f9fa; }
       .util-btn.clear:hover { background: #fa5252; }
+      .util-btn.mode-switch {
+        background: #4c6ef5;
+        color: white;
+        border: none;
+        font-size: 1.1em;
+        padding: 12px 24px;
+      }
+      .util-btn.mode-switch:hover { background: #3b5bdb; }
       .fps { font-family: monospace; color: #888; align-self: center; }
+      .stats {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        font-family: monospace;
+        color: #888;
+      }
+      .stats-label { font-size: 0.8em; color: #aaa; }
     </style>
   </head>
   <body>
@@ -199,9 +217,13 @@
       </div>
 
       <div class="bottom-controls">
-        <button class="util-btn" id="modeToggle">🎨 뷰 모드 변경</button>
+        <button class="util-btn mode-switch" id="simModeToggle">⚡ WASM 모드</button>
+        <button class="util-btn" id="viewModeToggle">🎨 물질 보기</button>
         <button class="util-btn clear" onclick="clearGrid()">🧹 초기화</button>
-        <span class="fps">FPS: <span id="fpsDisplay">0</span></span>
+        <div class="stats">
+          <div><span class="stats-label">FPS:</span> <span id="fpsDisplay">0</span></div>
+          <div><span class="stats-label">Particles:</span> <span id="particleCount">0</span></div>
+        </div>
       </div>
     </div>
 

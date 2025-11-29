@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JS Simulation Test</title>
+</head>
+<body>
+    <h1>JS Simulation Test</h1>
+    <div id="status">Loading...</div>
+    
+    <script src="simulation_js.js"></script>
+    <script>
+        const status = document.getElementById('status');
+        
+        try {
+            // Test if JSSimulation is available
+            if (typeof JSSimulation === 'undefined') {
+                status.textContent = '❌ ERROR: JSSimulation is not defined';
+                status.style.color = 'red';
+            } else {
+                status.textContent = '✅ SUCCESS: JSSimulation loaded correctly';
+                status.style.color = 'green';
+                
+                // Try to create an instance
+                const sim = new JSSimulation();
+                console.log('JSSimulation instance created:', sim);
+                
+                // Test basic functionality
+                sim.init();
+                console.log('Grid initialized');
+                
+                sim.addParticle(100, 100, 2); // Add sand
+                console.log('Particle added');
+                
+                sim.update();
+                console.log('Update completed');
+                
+                const buffer = sim.getRenderBuffer();
+                console.log('Render buffer length:', buffer.length);
+                
+                status.textContent += '\n✅ All tests passed!';
+            }
+        } catch (error) {
+            status.textContent = '❌ ERROR: ' + error.message;
+            status.style.color = 'red';
+            console.error(error);
+        }
+    </script>
+</body>
+</html>
