@@ -2,38 +2,17 @@
 
 ## 📋 구현 개요
 
-PLAN_SUMMARY.md의 계획에 따라 파우더 토이 시뮬레이션 엔진을 새로운 아키텍처로 리팩토링했습니다.
+파우더 토이 시뮬레이션 엔진을 C++/WebAssembly 기반으로 구현했습니다.
 
-**구현 날짜:** 2025-11-02
-
----
-
-## ✅ 완료된 작업
-
-### 1. 프로젝트 분석 및 문서화
-
-#### 생성된 문서
-- ✅ `PLAN_ANALYSIS.md` - 현재 상태 분석 및 문제점 파악
-- ✅ `PLAN_BUG.md` - 버그 목록 (마우스 pressed 버그 포함)
-- ✅ `PLAN_BUG_COMPLETED.md` - 해결된 버그 목록
-- ✅ `PLAN_ROADMAP.md` - 상세 구현 로드맵
-
-#### 분석 결과
-- 1차 MVP의 모놀리식 구조 문제 파악
-- 하드코딩된 물질 속성 문제 확인
-- 배경(EMPTY) 개념 부재 확인
-- 프론트엔드 마우스 버그 확인
+**최종 업데이트:** 2025-12-13
 
 ---
 
-### 2. 새로운 아키텍처 설계
+## ✅ 현재 구현 상태
+
+### 1. 핵심 시스템
 
 #### A. MaterialDB 시스템 (`src/material_db.h`)
-
-**핵심 개념:**
-- 물질 속성을 데이터와 로직으로 분리
-- 불변 속성 테이블로 관리
-- 타입 ID로 조회
 
 **구현된 구조체:**
 ```cpp
@@ -41,25 +20,36 @@ struct Material {
     const char* name;
     int default_state;             // SOLID, POWDER, LIQUID, GAS
     float density;                 // 밀도 (kg/m³)
-    float specific_heat;           // 비열 (J/(kg·K))
-    float melting_point;           // 녹는점 (°C)
-    float boiling_point;           // 끓는점 (°C)
-    float latent_heat_fusion;      // 융해 잠열
-    float latent_heat_vaporization; // 기화 잠열
-    float viscosity;               // 점도
+    float specific_heat;           // 비열 (미사용)
+    float melting_point;           // 녹는점 (미사용)
+    float boiling_point;           // 끓는점 (미사용)
+    float latent_heat_fusion;      // 융해 잠열 (미사용)
+    float latent_heat_vaporization; // 기화 잠열 (미사용)
+    float viscosity;               // 점도 (미사용)
     int color[3];                  // RGB
 };
 ```
 
-**정의된 물질 (8개):**
-1. **EMPTY (공기)** - 배경 역할, 비열 1005 J/(kg·K)
-2. **WALL (벽)** - 고정 고체, 밀도 2500 kg/m³
-3. **SAND (모래)** - 가루, 밀도 1600 kg/m³
-4. **WATER (물)** - 액체, 밀도 1000 kg/m³, 높은 비열 4186
-5. **ICE (얼음)** - 고체, 밀도 917 kg/m³ (물보다 낮음)
-6. **STEAM (증기)** - 기체, 밀도 0.6 kg/m³
-7. **FIRE (불)** - 특수 물질, 온도원 (150°C)
-8. **FROST (냉기)** - 특수 물질, 냉각원 (-20°C)
+**정의된 물질 (16개):**
+
+| ID | 물질 | 상태 | 밀도 | 설명 |
+|----|------|------|------|------|
+| 0 | EMPTY | 기체 | 1.2 | 배경 (공기) |
+| 1 | WALL | 고체 | 2500 | 고정 벽 |
+| 2 | SAND | 가루 | 1600 | 모래 |
+| 3 | WATER | 액체 | 1000 | 물 |
+| 4 | ICE | 고체 | 917 | 얼음 |
+| 5 | STEAM | 기체 | 0.6 | 수증기 |
+| 6 | FIRE | 기체 | 0.3 | 불 (수명 있음) |
+| 7 | OXYGEN | 기체 | 1.4 | 산소 |
+| 8 | HYDROGEN | 기체 | 0.09 | 수소 |
+| 9 | STEAM_OIL | 기체 | 2.5 | 유증기 |
+| 10 | WOOD | 고체 | 600 | 나무 |
+| 11 | IRON | 고체 | 7874 | 철 |
+| 12 | LITHIUM | 가루 | 534 | 리튬 |
+| 13 | SODIUM | 가루 | 971 | 나트륨 |
+| 14 | OIL | 액체 | 900 | 기름 |
+| 15 | CO2 | 기체 | 1.98 | 이산화탄소 |
 
 ---
 
@@ -260,29 +250,7 @@ void updateMovement() {
 
 ---
 
-#### Active Chunks 시스템
-
-**목적:** 성능 최적화
-
-**구현:**
-```cpp
-const CHUNK_SIZE = 16;
-bool activeChunks[CHUNK_COUNT];
-
-void markChunkActive(int x, int y) {
-    int chunkIdx = getChunkIndex(x, y);
-    activeChunks[chunkIdx] = true;
-}
-```
-
-**현재 상태:**
-- ✅ 기본 구조 구현
-- ⚠️ 모든 청크를 활성화 (최적화는 나중에)
-- 온도 변화 시 청크 마킹
-
----
-
-### 4. 프론트엔드 개선
+### 3. 프론트엔드 개선
 
 #### A. 마우스 Pressed 버그 수정 (`web/main.js`)
 
@@ -381,7 +349,7 @@ function getParticle(index) {
 
 ---
 
-### 5. 빌드 스크립트 업데이트 (`build.bat`)
+### 4. 빌드 스크립트 업데이트 (`build.bat`)
 
 **추가된 내용:**
 ```batch
@@ -434,33 +402,6 @@ function getParticle(index) {
 
 ---
 
-## 🧪 테스트 시나리오
-
-### 1. 열 전도 테스트
-1. FIRE 입자 하나 추가
-2. 온도 모드로 전환
-3. 열이 주변으로 퍼지는지 확인
-4. FIRE 제거 후에도 열이 남아있는지 확인
-
-### 2. 상태 전이 테스트
-1. ICE 입자 추가
-2. FIRE로 가열
-3. ICE → WATER → STEAM 전이 확인
-4. FROST로 냉각
-5. STEAM → WATER → ICE 전이 확인
-
-### 3. 밀도 테스트
-1. WATER 추가
-2. SAND 추가
-3. SAND가 WATER에 가라앉는지 확인
-4. 온도 모드에서 뜨거운 SAND가 WATER를 데우는지 확인
-
-### 4. 마우스 버그 테스트
-1. 마우스를 누르고 움직이지 않기
-2. 계속 입자가 생성되는지 확인
-
----
-
 ## 📊 성능 고려사항
 
 ### 현재 상태
@@ -471,62 +412,6 @@ function getParticle(index) {
 ### 예상 성능
 - 목표: 30-60 FPS
 - 최적화 필요 시: Active Chunks 활성화
-
----
-
-## 🚀 다음 단계
-
-### 즉시 할 일
-1. **빌드 및 테스트**
-   ```batch
-   build.bat
-   cd web
-   python -m http.server 8000
-   ```
-
-2. **기능 검증**
-   - 모든 테스트 시나리오 실행
-   - 버그 발견 시 PLAN_BUG.md에 기록
-
-### 향후 확장 (PLAN_ROADMAP.md 참조)
-1. **잠열 시스템** (STEP 6)
-   - latent_heat_storage 활용
-   - 0°C에서 즉시 녹지 않는 얼음
-
-2. **점도 시스템** (STEP 6)
-   - viscosity 활용
-   - 액체의 퍼짐 속도 조절
-
-3. **화학 반응** (STEP 6)
-   - ChemistryDB 구축
-   - 물질 간 상호작용
-
-4. **기압 시스템** (STEP 7)
-   - PLAN_PRESSURE.md 참조
-   - pressure 필드 활용
-
----
-
-## 📝 파일 변경 사항
-
-### 신규 파일
-- ✅ `src/material_db.h` - 물질 속성 데이터베이스
-- ✅ `src/simulation_new.cpp` → `src/simulation.cpp` (교체)
-- ✅ `docs/plan/PLAN_ANALYSIS.md` - 프로젝트 분석
-- ✅ `docs/plan/PLAN_BUG.md` - 버그 목록
-- ✅ `docs/plan/PLAN_BUG_COMPLETED.md` - 해결된 버그
-- ✅ `docs/plan/PLAN_ROADMAP.md` - 구현 로드맵
-- ✅ `docs/plan/IMPLEMENTATION_SUMMARY.md` - 이 문서
-
-### 수정된 파일
-- ✅ `src/particle.h` - Particle 구조체 확장
-- ✅ `src/simulation.cpp` - 완전히 새로 작성
-- ✅ `web/main.js` - 마우스 버그 수정, 온도 시각화
-- ✅ `web/index.html` - 렌더링 모드 UI 추가
-- ✅ `build.bat` - 빌드 옵션 업데이트
-
-### 백업 파일
-- ✅ `src/simulation_old.cpp` - 기존 simulation.cpp 백업
 
 ---
 
